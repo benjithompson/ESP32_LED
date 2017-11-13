@@ -9,68 +9,51 @@
 // Import required libraries
 #include <WiFi.h>
 #include <aREST.h>
-#include <aREST_UI.h>
 
+//=========Function Declarations==============
+void connectToWifi();
+void wifiConnectedStatusLED();
+void blinkOne(void* p);
+void blinkTwo(void* p);
+int ledControl(String command);
+//============================================
 
+//=========Global Variables===================
+int led;
 
-// Create aREST instance
-aREST_UI rest = aREST_UI();
+// Client variables
+char linebuf[80];
+int charcount = 0;
+//============================================
 
+aREST rest = aREST();
+WiFiServer server(80);
 
 // WiFi parameters
 char *ssid = "pluviophile2.4";
 char *password = "Youshallnotpassword!";
 
-// Create an instance of the server
-WiFiServer server(80);
-
-// Client variables
-char linebuf[80];
-int charcount = 0;
-
-// Variables to be exposed to the API
-int led;
-
-// Declare functions to be exposed to the API
-int ledControl(String command);
-void wifiConnectedStatusLED();
-
 void setup()
 {
 
-  // Start Serial
   Serial.begin(115200);
-
-  // set pin as output
   pinMode(LED_BUILTIN, OUTPUT);
-  // pinMode(32, OUTPUT);
-  // pinMode(35, OUTPUT);
-  // pinMode(32, OUTPUT);
-
-  rest.title("aREST UI Demo");
-  
-  rest.slider(34);
-
-  rest.button(2);
 
   // Init variables and expose them to REST API
   led = 0;
   rest.variable("Led", &led);
 
-  // Labels
-  rest.label("temperature");
-  rest.label("humidity");
-
-
   // Function to be exposed
   rest.function("led", ledControl);
 
   // Give name & ID to the device (ID should be 6 characters long)
-  rest.set_id("000001");
+  rest.set_id("Leet LED");
   rest.set_name("esp32");
 
   // Connect to WiFi
+  void connectToWifi();
   WiFi.begin(ssid, password);
+
   while (WiFi.status() != WL_CONNECTED)
   {
     digitalWrite(LED_BUILTIN, HIGH);
@@ -82,9 +65,8 @@ void setup()
 
   Serial.println("");
   Serial.println("WiFi connected");
-
   wifiConnectedStatusLED();
-
+  
   // Start the server
   server.begin();
   Serial.println("Server started");
@@ -103,16 +85,49 @@ void loop()
   while(!client.available()){
     delay(1);
   }
+
   rest.handle(client);
+
+  while(!client.available()){
+    delay(1);
+  }
+}
+
+void connectToWifi()
+{
+
 }
 
 // Custom function accessible by the API
 int ledControl(String command)
 {
+
+   BaseType_t xReturned;
+   TaskHandle_t xHandle = NULL;
+  Serial.println(command);
   // Get state from command
   int state = command.toInt();
-  digitalWrite(6, state);
-  return state;
+  Serial.println(state);
+
+  switch(state){
+    case 1:
+      Serial.println("Case1");
+      xReturned = xTaskCreate(&blinkOne, "blinkOne", 1024, NULL, 10, NULL);
+      break;
+    case 2:
+      Serial.println("Case2");
+      xReturned = xTaskCreate(&blinkTwo, "blinkTwo", 1024, NULL, 10, NULL);
+      break;
+  }
+  while (true)
+  {
+    if (xReturned == pdPASS)
+    {
+      vTaskDelete(xHandle);
+      return state;
+    }
+  }
+ 
 }
 
 //Status functions
@@ -125,6 +140,32 @@ void wifiConnectedStatusLED()
     digitalWrite(LED_BUILTIN, LOW);
     delay(75);
   }
+}
+
+void blinkOne(void* p){
+
+    for (int i = 0; i < 1; i++)
+    {
+      digitalWrite(LED_BUILTIN, HIGH);
+      delay(100);
+      digitalWrite(LED_BUILTIN, LOW);
+      delay(100);
+      vTaskDelay(1000 / portTICK_RATE_MS);
+    }
+    
+
+}
+
+void blinkTwo(void* p){
+
+    for (int i = 0; i < 2; i++)
+    {
+      digitalWrite(LED_BUILTIN, HIGH);
+      delay(100);
+      digitalWrite(LED_BUILTIN, LOW);
+      delay(100);
+      vTaskDelay(1000 / portTICK_RATE_MS);
+    }
 }
 
 
