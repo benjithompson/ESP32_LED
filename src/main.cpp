@@ -13,14 +13,16 @@
 //=========Function Declarations==============
 void connectToWifi();
 void wifiConnectedStatusLED();
-void blinkOne(void* p);
-void blinkTwo(void* p);
+void taskBlinkOne(void* p);
+void blinkOne();
+void taskBlinkTwo(void* p);
+void blinkTwo();
 int ledControl(String command);
 //============================================
 
 //=========Global Variables===================
 int led;
-
+int req = 0;
 // Client variables
 char linebuf[80];
 int charcount = 0;
@@ -51,7 +53,6 @@ void setup()
   rest.set_name("esp32");
 
   // Connect to WiFi
-  void connectToWifi();
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED)
@@ -75,36 +76,25 @@ void setup()
   Serial.println(WiFi.localIP());
 }
 
-void loop()
-{
-
+void loop() {
+  
+  // Handle REST calls
   WiFiClient client = server.available();
-  if(!client){
+  if (!client) {
     return;
   }
   while(!client.available()){
     delay(1);
   }
-
   rest.handle(client);
-
-  while(!client.available()){
-    delay(1);
-  }
-}
-
-void connectToWifi()
-{
-
+  delay(100);
 }
 
 // Custom function accessible by the API
 int ledControl(String command)
 {
+  TaskHandle_t xHandle = NULL;
 
-   BaseType_t xReturned;
-   TaskHandle_t xHandle = NULL;
-  Serial.println(command);
   // Get state from command
   int state = command.toInt();
   Serial.println(state);
@@ -112,21 +102,18 @@ int ledControl(String command)
   switch(state){
     case 1:
       Serial.println("Case1");
-      xReturned = xTaskCreate(&blinkOne, "blinkOne", 1024, NULL, 10, NULL);
+      xTaskCreate(&taskBlinkOne, "blinkOne", 1024, NULL, 10, NULL);
       break;
     case 2:
       Serial.println("Case2");
-      xReturned = xTaskCreate(&blinkTwo, "blinkTwo", 1024, NULL, 10, NULL);
+      xTaskCreate(&taskBlinkTwo, "blinkTwo", 1024, NULL, 10, NULL);
+      break;
+    default:
+      Serial.println("default");
       break;
   }
-  while (true)
-  {
-    if (xReturned == pdPASS)
-    {
-      vTaskDelete(xHandle);
-      return state;
-    }
-  }
+
+  return state;
  
 }
 
@@ -142,9 +129,14 @@ void wifiConnectedStatusLED()
   }
 }
 
-void blinkOne(void* p){
+void taskBlinkOne(void* p){
+  blinkOne();
+  vTaskDelete(NULL);
+}
 
-    for (int i = 0; i < 1; i++)
+void blinkOne(){
+
+    for (int i = 0; i < 10; i++)
     {
       digitalWrite(LED_BUILTIN, HIGH);
       delay(100);
@@ -152,13 +144,16 @@ void blinkOne(void* p){
       delay(100);
       vTaskDelay(1000 / portTICK_RATE_MS);
     }
-    
-
 }
 
-void blinkTwo(void* p){
+void taskBlinkTwo(void* p){
+  blinkTwo();
+  vTaskDelete(NULL);
+}
 
-    for (int i = 0; i < 2; i++)
+void blinkTwo(){
+
+    for (int i = 0; i < 10; i++)
     {
       digitalWrite(LED_BUILTIN, HIGH);
       delay(100);
