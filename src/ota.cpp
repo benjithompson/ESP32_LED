@@ -10,8 +10,8 @@ void connectWifi()
     // Connect to WiFi
     WiFi.begin(SSID, PW);
     wifiConnectPending();
-    Serial.println("");
-    Serial.println("WiFi connected");
+    //Serial.println("");
+    //Serial.println("WiFi connected");
 }
 
 void wifiConnectPending()
@@ -22,7 +22,7 @@ void wifiConnectPending()
         delay(500);
         digitalWrite(LED_BUILTIN, LOW);
         delay(500);
-        Serial.print(".");
+        //Serial.print(".");
     }
 
     //Blink LED when connected

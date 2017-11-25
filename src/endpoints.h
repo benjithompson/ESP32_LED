@@ -3,4 +3,4 @@ void blinkOne();
 void taskBlinkTwo(void* p);
 void blinkTwo();
 int ledControl(String command);
-int testFunction(String command);
+int lightsToggle(String command);

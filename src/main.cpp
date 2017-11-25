@@ -12,7 +12,9 @@
 
 // Import local files
 #include "endpoints.h"
-#include "ota.h"
+//#include "ota.h"
+
+#define LIGHTPIN 2
 
 void connectWifi();
 void wifiConnectPending();
@@ -29,8 +31,9 @@ int charcount = 0;
 
 void setup()
 {
-    Serial.begin(115200);
+    //Serial.begin(115200);
     pinMode(LED_BUILTIN, OUTPUT);
+    //pinMode(LIGHTPIN, OUTPUT);
 
     // Init variables and expose them to REST API
     led = 0;
@@ -38,7 +41,7 @@ void setup()
 
     // Function to be exposed
     rest.function("led", ledControl);
-    rest.function("test", testFunction);
+    rest.function("lights", lightsToggle);
 
     // Give name & ID to the device (ID should be 6 characters long)
     rest.set_id("Leet LED");
@@ -48,18 +51,18 @@ void setup()
 
     // Start the server
     server.begin();
-    Serial.println("Server started");
+    //Serial.println("Server started");
 
-    setupOta();
+    //setupOta();
 
     // Print the IP address
-    Serial.println(WiFi.localIP());
+    //Serial.println(WiFi.localIP());
 }
 
 void loop()
 {
 
-    ArduinoOTA.handle();
+    //ArduinoOTA.handle();
 
     // Handle REST calls
     WiFiClient client = server.available();
@@ -70,6 +73,6 @@ void loop()
             delay(5);
         }
         rest.handle(client);
-        delay(1000);
+        delay(5);
     }
 }
